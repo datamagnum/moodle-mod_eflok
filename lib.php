@@ -28,6 +28,15 @@
  * @param string $feature Constant representing the feature.
  * @return true | null True if the feature is supported, null otherwise.
  */
+
+//define('MOD_EFLOK_FRONTEND_BASE_URL', 'http://localhost:3000');
+//define('MOD_EFLOK_GET_BOARD_LIST_URL', 'https://b59d-110-227-212-183.ngrok-free.app/v2/meeting/getMoodleBoardList');
+//define('MOD_EFLOK_CREATE_BOARD_URL',   'https://b59d-110-227-212-183.ngrok-free.app/v2/meeting/createMoodleMeeting');
+
+define('MOD_EFLOK_FRONTEND_BASE_URL', 'https://eflok.com');
+define('MOD_EFLOK_GET_BOARD_LIST_URL','https://prod-api.eflok.com/v2/meeting/getMoodleBoardList');
+define('MOD_EFLOK_CREATE_BOARD_URL',  'https://prod-api.eflok.com/v2/meeting/createMoodleMeeting');
+
 function eflok_supports($feature) {
     switch ($feature) {
         case FEATURE_MOD_INTRO:

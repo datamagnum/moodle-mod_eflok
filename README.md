@@ -42,9 +42,3 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
-## Configuration ##
-
--Plugin installtion time created "mdl_eflok_configuration" table.
--Please fill "mdl_eflok_configuration" tables "organisation_id" column your organisation id.

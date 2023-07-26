@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
     $settings = new admin_settingpage('mod_eflok_settings', new lang_string('pluginname', 'mod_eflok'));
+    define('MOD_EFLOK_GET_BOARD_LIST_URL', 'http://localhost:9002/v2/meeting/getMoodleBoardList');
 
     // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($ADMIN->fulltree) {

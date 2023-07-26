@@ -1,11 +1,5 @@
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 <?php
-
-define('CREATE_BOARD_URL', 'http://localhost:9002/v2/meeting/createMoodleMeeting');
-define('GET_BOARD_LIST_URL', 'http://localhost:9002/v2/meeting/getMoodleBoardList');
-define('FRONTEND_BASE_URL', 'http://localhost:3000');
-
+$PAGE->requires->js('/mod/eflok/js/jquery.min.js');
 
 // This file is part of Moodle - https://moodle.org/
 //
@@ -35,6 +29,7 @@ use search_solr\schema;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/course/moodleform_mod.php');
+require_once("lib.php");
 
 /**
  * Module instance settings form.
@@ -55,15 +50,16 @@ class mod_eflok_mod_form extends moodleform_mod
         $mform = $this->_form;
 
 
-        $options = $DB->get_records_sql('SELECT * FROM mdl_eflok_configuration');
+
+
+        $options = $DB->get_records('eflok_configuration');
         $configuration = json_decode(json_encode($options), true);
-        if(count($configuration)){
+        if (count($configuration)) {
             $orgId = $configuration[1]['organisation_id'];
-        }else{
-            exit("Somthing went wroking. please contact eflok supprt email. ");
+        } else {
+            exit(get_string('basic_configuration_error_message', 'mod_eflok'));
         }
-        
-        
+
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         $mform->addElement('text', 'name', get_string('eflokname', 'mod_eflok'), array('size' => '64'));
@@ -79,7 +75,7 @@ class mod_eflok_mod_form extends moodleform_mod
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         $mform->addHelpButton('name', 'eflokname', 'mod_eflok');
 
-        
+
         if ($CFG->branch >= 29) {
             $this->standard_intro_elements();
         } else {
@@ -89,13 +85,20 @@ class mod_eflok_mod_form extends moodleform_mod
         $searchareas = \core_search\manager::get_search_areas_list(true);
 
         //FETCH USER BOARD LIST START
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, GET_BOARD_LIST_URL);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        $moodleBoardListJson = curl_exec($ch);
+        $curl = new curl();
+        $moodleBoardListJson = $curl->get(MOD_EFLOK_GET_BOARD_LIST_URL, array());
         $moodleBoardList = json_decode($moodleBoardListJson, true);
-        //echo "<pre>";print_r($moodleBoardList);exit();
+        
+        // $ch = curl_init();
+        // curl_setopt($ch, CURLOPT_URL, MOD_EFLOK_GET_BOARD_LIST_URL);
+
+        // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        // curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+        // $moodleBoardListJson = curl_exec($ch);
+        // $moodleBoardList = json_decode($moodleBoardListJson, true);
+        // echo "<pre>";print_r($moodleBoardList);exit();
+
         $tempBoardArr = [];
         if (isset($moodleBoardList) && isset($moodleBoardList['data']) && count($moodleBoardList['data']) != 0) {
             foreach ($moodleBoardList['data'] as $key => $value) {
@@ -133,9 +136,9 @@ class mod_eflok_mod_form extends moodleform_mod
 
         $mform->addElement('textarea', 'eventDescription', get_string("board_description", "mod_eflok"), 'wrap="virtual" rows="10" cols="50"');
 
-        $mform->addElement('select', 'isProctoring', get_string('is_proctoring', 'mod_eflok'), array("false" => "False", "true" => "True"));
+        $mform->addElement('select', 'isProctoring', get_string('is_proctoring', 'mod_eflok'), array("false" => get_string('false', 'mod_eflok'), "true" => get_string('true', 'mod_eflok')));
 
-        $mform->addElement('select', 'external_board_access', get_string('board_access', 'mod_eflok'), array("can-edit" => "Can Edit", "can-view" => "Can View"));
+        $mform->addElement('select', 'external_board_access', get_string('board_access', 'mod_eflok'), array("can-edit" => get_string('can-edit', 'mod_eflok'), "can-view" => get_string('can-view', 'mod_eflok')));
 
         $mform->addElement('hidden', 'initatorUsername', $USER->email);
 
@@ -146,7 +149,7 @@ class mod_eflok_mod_form extends moodleform_mod
 
         $mform->addElement('html', '<div class="existing_board_block hide">');
 
-        $mform->addElement('autocomplete', 'existing_board_id', "Select Board", $tempBoardArr, array('multiple' => false, 'noselectionstring' => "Select board"));
+        $mform->addElement('autocomplete', 'existing_board_id', get_string('select_board', 'mod_eflok'), $tempBoardArr, array('multiple' => false, 'noselectionstring' => get_string('select_board', 'mod_eflok')));
 
         $mform->addElement('html', '</div>');
 
@@ -159,8 +162,9 @@ class mod_eflok_mod_form extends moodleform_mod
         $this->add_action_buttons();
 
         //JQUERY CODE
+
         echo '<script>            
-            $(document).ready(function () {
+        document.addEventListener("DOMContentLoaded", () => {
                 $("#id_board_type_1").click(function () {
                     if ($(this).is(":checked")) {
                         $(".existing_board_block").hide();
@@ -179,7 +183,6 @@ class mod_eflok_mod_form extends moodleform_mod
 
     public function definition_after_data()
     {
-
     }
 
     public function data_postprocessing($data)
@@ -190,33 +193,42 @@ class mod_eflok_mod_form extends moodleform_mod
         $array = json_decode(json_encode($data), true);
 
         if ($array['board_type'] == 2) {
-            $meetingUrl = FRONTEND_BASE_URL . '/board#room=' . $array['existing_board_id'];
+            $meetingUrl = MOD_EFLOK_FRONTEND_BASE_URL . '/board#room=' . $array['existing_board_id'];
 
-            $data->introeditor['text'] = $array->introeditor['text'] . ' &nbsp; <a href=' . $meetingUrl . ' target="_blank" > Click to view board</a>';
+            $data->introeditor['text'] = $array->introeditor['text'] . ' &nbsp; <a href=' . $meetingUrl . ' target="_blank" >' . get_string('click_to_view_board', 'mod_eflok') . '</a>';
         } else {
-            $ch = curl_init(CREATE_BOARD_URL);
+            $payload = json_encode($data);
             $headers = array(
                 'Content-Type: application/json',
             );
-            $payload = json_encode($data);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-            $result = curl_exec($ch);
+            $curl = new curl();
+            $curl->setopt(array('CURLOPT_RETURNTRANSFER' => true, 'CURLOPT_HTTPHEADER' => $headers, 'CURLOPT_POSTFIELDS' => $payload));
+            $moodleBoardListJson = $curl->post(MOD_EFLOK_CREATE_BOARD_URL, $payload);
+            $finalResult = json_decode($moodleBoardListJson, true);
+            
 
-            curl_close($ch);
+            //STORE DATA
+            // $ch = curl_init(MOD_EFLOK_CREATE_BOARD_URL);
+            // $headers = array(
+            //     'Content-Type: application/json',
+            // );
+            // $payload = json_encode($data);
+            // curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            // curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            // curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            // $result = curl_exec($ch);
+            // curl_close($ch);
+            // $finalResult = json_decode($result, true);
 
-            $finalResult = json_decode($result, true);
             if (isset($finalResult['status']) && $finalResult['status']) {
-                $meetingUrl = FRONTEND_BASE_URL . '/board#room=' . $finalResult['data']['meetingId'];
-                $data->introeditor['text'] = $data->introeditor['text'] . ' &nbsp; <a href=' . $meetingUrl . ' target="_blank" > Click to view board</a>';
+                $meetingUrl = MOD_EFLOK_FRONTEND_BASE_URL . '/board#room=' . $finalResult['data']['meetingId'];
+                $data->introeditor['text'] = $data->introeditor['text'] . ' &nbsp; <a href=' . $meetingUrl . ' target="_blank" >' . get_string('click_to_view_board', 'mod_eflok') . '</a>';
             }
         }
     }
 
     public function data_preprocessing(&$defaultvalues)
     {
-
     }
 }
