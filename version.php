@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_eflok';
 $plugin->release = '0.1.0';
-$plugin->version = 2023071000;
+$plugin->version = 2023080400;
 $plugin->requires = 2019052000; //2022112800;
 $plugin->maturity = MATURITY_STABLE;
