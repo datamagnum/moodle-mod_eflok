@@ -45,7 +45,7 @@ $string['true'] = 'True';
 $string['can-edit'] = 'Can edit';
 $string['can-view'] = 'Can view';
 
-$string['basic_configuration_error_message'] = 'Somthing went wroking. please contact eflok supprt email.';
+$string['basic_configuration_error_message'] = 'Somthing went wrong in your basic eflok configuration. please contact eflok supprt email.';
 
 $string['board_type_radio'] = 'Select board type';
 $string['board_type_new_board'] = 'Create new board';
